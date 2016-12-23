@@ -1,0 +1,209 @@
+---
+title: "Data605 - Assignment6"
+author: "Kishore Prasad"
+date: "October 1, 2016"
+output: html_document
+---
+
+
+```{r, warning=FALSE, message=FALSE}
+
+library(stringr)
+library(dplyr)
+
+```
+
+##Problem set 1
+
+
+####(1) When you roll a fair die 3 times, how many possible outcomes are there?
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# Assuming a fair die, each die has 6 sides. There are 6 possible outcomes on each roll. 
+
+# Also assuming that the order of outcomes are important ie (1, 2, 3) is not the same as (3, 2, 1) 
+answer <- 6 * 6 * 6
+answer
+
+```
+
+
+
+####(2) What is the probability of getting a sum total of 3 when you roll a die two times?
+
+```{r, warning=FALSE, message=FALSE}
+Possibe_Outcomes <- 6*6
+Required_Outcomes <- 2
+
+probability_sum_3 <- Required_Outcomes/Possibe_Outcomes
+probability_sum_3
+
+```
+
+
+
+####(3) Assume a room of 25 strangers. What is the probability that two of them have the same birthday? Assume that all birthdays are equally likely and equal to 1/365 each. What happens to this probability when there are 50 people in the room?
+
+Approach: We will calculate the probability that no 2 persons in the group share the same birthday. The complement of this would be that at least 2 persons share the same birthday.
+
+The first person's birthday can be any of the 365 days. So the probability is: 365 / 365 = 1.
+
+Now, since one day of the year has already been occupied with one person's birthday, and given our approach, we can conclude that the second person's birthday has a probability of 364/365. So the probability that both of them don't share the same birthday is (365/365) * (364/365).
+
+Similarly, the probability that the third person does not share the same birthday is given by 
+
+(365/365) * (364/365) * (363/365)
+
+calculating for Nth person not sharing the same birthday, we get
+
+(365/365) * (364/365) * (363/365) ..... ((365-(n-1))/365)
+
+So calculating for the probability of 25 persons not sharing the same birthday:
+
+```{r, warning=FALSE, message=FALSE}
+# https://en.wikipedia.org/wiki/Birthday_problem
+
+n <- 25
+Prob_unique_25 <- prod(365:(365-(n-1))) / (365^n)
+Prob_unique_25
+```
+
+Now calculating for the probability that at least 2 persons from the group share the same birthday:
+
+```{r, warning=FALSE, message=FALSE}
+prob_atleast_2 <- 1 - Prob_unique_25
+prob_atleast_2
+
+```
+
+**The probability that at least 2 persons share the same birthday in a group of 25 persons is: `r round(prob_atleast_2 * 100,2)`%**
+
+
+Similarly, calculating for the probability that at least 2 persons share the same birthday in a group of 50 members:
+
+```{r, warning=FALSE, message=FALSE}
+n <- 50
+Prob_unique_50 <- prod(365:(365-(n-1))) / (365^n)
+prob_atleast_2 <- 1 - Prob_unique_50
+prob_atleast_2
+
+```
+
+**The probability that at least 2 persons share the same birthday in a group of 50 persons is: `r round(prob_atleast_2 * 100,2)`%**
+
+
+
+
+
+
+##Problem set 2
+
+
+Write a program to take a document in English and print out the estimated probabilities for each of the words that occur in that document. Your program should take in a file containing a large document and write out the probabilities of each of the words that appear in that document. Please remove all punctuation (quotes, commas, hyphens etc) and convert the words to lower case before you perform your calculations.
+
+```{r, warning=FALSE, message=FALSE}
+
+getWords <- function(filename){
+    words <- scan(file=filename, what="character", encoding = "UTF-8", quote=NULL)
+    
+    # removing ONLY punctuations (retaining numbers, $ etc) and converting to lower case
+    words_df <- data.frame(word=tolower(str_replace_all(words, "[[:punct:]]", "")))
+
+    # Calculating word count
+    words_summary <- words_df %>%
+    group_by(word) %>%
+    summarize(Count = n())
+    
+    # Calculating Probabilities
+    words_summary <- cbind(words_summary, Probability = words_summary$Count / sum(words_summary$Count) )
+        
+    return(words_summary)
+}
+
+
+# Assuming that the below text file is in the working directory
+filename <- "assign6.sample.txt"
+
+# Sample output from the middle of the data frame
+
+tail(head(getWords(filename),200),20)
+
+```
+
+
+
+
+
+
+Extend your program to calculate the probability of two words occurring adjacent to each other. It should take in a document, and two words (say the and for) and compute the probability of each of the words occurring in the document and the joint probability of both of them occurring together. The order of the two words is not important. 
+
+```{r, warning=FALSE, message=FALSE}
+
+bigram_prob <- function(filename, word1, word2){
+    words <- scan(file=filename, what="character", encoding = "UTF-8", quote=NULL)
+    
+    # removing ONLY punctuations (retaining numbers, $ etc) and converting to lower case
+    words_df <- tolower(str_replace_all(words, "[[:punct:]]", ""))
+
+    # Calculating word count
+    words_summary <- data.frame(word=words_df) %>%
+    group_by(word) %>%
+    summarize(Count = n())
+    
+    # Calculating Probabilities
+    words_summary <- cbind(words_summary, Probability = words_summary$Count / sum(words_summary$Count) )
+    probabilities_list <- list(words_summary[words_summary$word==word1,c(1,3)])
+    probabilities_list[[2]] <- words_summary[words_summary$word==word2,c(1,3)]
+    
+        
+    # Concatenate the next word to the current word separated by ":" and create a data frame
+    words_df <- data.frame(wordpair = paste0(words_df, ":", lead(words_df,1)))
+
+    # Calculating bigram count
+    bigrams_summary <- words_df %>%
+    group_by(wordpair) %>%
+    summarize(Count = n())
+    
+    # Calculating Probabilities
+    bigrams_summary <- cbind(bigrams_summary, Probability = bigrams_summary$Count / sum(bigrams_summary$Count) )
+
+    probabilities_list[[3]] <- sum(bigrams_summary[bigrams_summary$wordpair==paste0(word1, ":", word2) | bigrams_summary$wordpair==paste0(word2, ":", word1), ]$Probability) 
+    
+    return(probabilities_list)
+}
+
+```
+
+```{r, warning=FALSE, message=TRUE}
+# Assuming that the below text file is in the working directory
+filename <- "assign6.sample.txt"
+
+word1 <- "the"
+word2 <- "for"
+probabilities <- bigram_prob(filename, word1, word2)
+
+message("probability for word: '", word1, "' is: ", as.numeric(unlist(probabilities[[1]][2])))
+message("probability for word: '", word2, "' is: ", as.numeric(unlist(probabilities[[2]][2])))
+message("probability for the bigram is : ", as.numeric(unlist(probabilities[[3]])))
+
+
+word1 <- "as"
+word2 <- "far"
+probabilities <- bigram_prob(filename, word1, word2)
+
+message("probability for word: '", word1, "' is: ", as.numeric(unlist(probabilities[[1]][2])))
+message("probability for word: '", word2, "' is: ", as.numeric(unlist(probabilities[[2]][2])))
+message("probability for the bigram is : ", as.numeric(unlist(probabilities[[3]])))
+
+```
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,219 @@
+---
+title: "Data605 - Assignment5"
+author: "Kishore Prasad"
+date: "September 25, 2016"
+output: html_document
+---
+
+
+##Problem set 1
+
+
+In this problem set we'll work out some properties of the least squares solution that we reviewed in the weekly readings. Consider the unsolvable system Ax = b as given below:
+
+$\begin{bmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 3 \\ 1 & 4  \end{bmatrix} \begin{bmatrix} x_1 \\ x_2 \end{bmatrix} = \begin{bmatrix} 0 \\ 8 \\ 8 \\ 20  \end{bmatrix}$
+
+
+**Answer:**
+
+####a. Write R markdown script to compute ATA and ATb.
+
+Lets first define the 2 matrices. 
+
+```{r, warning=FALSE, message=FALSE}
+# Define the matrix
+A <- matrix(c(1,1,1,1,0,1,3,4), nrow = 4, ncol = 2, byrow = FALSE)
+A
+
+b <- matrix(c(0,8,8,20), nrow = 4, ncol = 1, byrow = FALSE)
+b
+
+```
+
+
+We then calculate 
+
+$l = A^T A$ 
+
+```{r, warning=FALSE, message=FALSE}
+l <- t(A) %*% A
+l
+```
+
+and 
+
+$m = A^T b$.
+
+```{r, warning=FALSE, message=FALSE}
+m <- t(A) %*% b
+m
+```
+
+
+####b. Solve for ^x in R using the above two computed matrices.
+
+We know that:
+
+$A^TA \times \hat { x }  = A^T b$ 
+
+Hence it follows that, 
+
+$\hat { x }  = (A^TA)^{-1} \times A^Tb$
+
+i.e 
+
+$\hat { x }  = l^{-1} \times m$
+
+
+```{r, warning=FALSE, message=FALSE}
+x_hat <- solve(l) %*% m
+x_hat
+```
+
+####c. What is the squared error of this solution?
+
+We know that $b = p + e$, where p is the projection vector and e is the error vector. To compute the error, we can rewrite as $e = b - p$.
+
+To calculate p, we use the below:
+
+$p = A \times \hat{x}$
+
+```{r, warning=FALSE, message=FALSE}
+projection <- A %*% x_hat
+projection
+```
+
+We now calculate squared error as below:
+
+```{r, warning=FALSE, message=FALSE}
+e <- b - projection
+e
+
+squared_error_b <- sum(e^2)
+squared_error_b
+```
+
+
+####d. Instead of b = [0; 8; 8; 20], start with p = [1; 5; 13; 17] and find the exact solution (i.e. show that this system is solvable as all equations are consistent with each other. This should result in an error vector e = 0).
+
+Repeating the same steps as above with p = [1, 5, 13, 17]
+
+
+```{r, warning=FALSE, message=FALSE}
+p <- matrix(c(1,5,13,17), nrow = 4, ncol = 1, byrow = FALSE)
+p
+
+l <- t(A) %*% A
+m <- t(A) %*% p
+
+x_hat <- solve(l) %*% m
+x_hat
+
+projection_2 <- A %*% x_hat
+projection_2
+
+e <- round(p - projection_2)
+e
+
+squared_error_p <- round(sum(e^2))
+squared_error_p
+```
+
+
+####e. Show that the error e = b - p = [-1, 3, -5, 3]
+
+
+```{r, warning=FALSE, message=FALSE}
+e <- b - p
+e
+```
+
+
+####f. Show that the error e is orthogonal to p and to each of the columns of A. 
+
+If 2 vectors are orthogonal, then their dot product is 0.
+
+Checking for p :
+
+```{r, warning=FALSE, message=FALSE}
+dot_e_p <- round(sum(e*p))
+dot_e_p
+```
+
+Checking for first column of A :
+
+```{r, warning=FALSE, message=FALSE}
+dot_e_A1 <- round(sum(e*A[,1]))
+dot_e_A1
+```
+
+Checking for second column of A :
+
+```{r, warning=FALSE, message=FALSE}
+dot_e_A2 <- round(sum(e*A[,2]))
+dot_e_A2
+```
+
+
+
+
+##Problem set 2
+
+Consider the modified auto-mpg data (obtained from the UC Irvine Machine Learning dataset). This dataset contains 5 columns: displacement, horsepower, weight, acceleration, mpg. We are going to model mpg as a function of the other four variables.
+
+**Answer:**
+
+
+####a. Write an R markdown script that takes in the auto-mpg data, extracts an A matrix from the first 4 columns and b vector from the fifth (mpg) column.
+
+
+First, read the data as a dataset.
+
+```{r, warning=FALSE, message=FALSE}
+data <- read.table('auto-mpg.data', col.names=c('displacement', 'horsepower', 'weight', 'acceleration', 'mpg'))
+
+head(data)
+```
+
+Next, create matrices from the data. 
+
+```{r, warning=FALSE, message=FALSE}
+
+A <- data.matrix(data[,1:4])
+
+# An additional column for the intercepts
+A <- cbind(rep(1, nrow(A)), A)
+head(A)
+
+b <- data.matrix(data[,5])
+head(b)
+
+```
+
+####b. Using the least squares approach, your code should compute the best fitting solution. That is, find the best fitting equation that expresses mpg in terms of the other 4 variables. 
+
+Next, compute the best fitting solution using the same approach as the previous problem set. The resulting vector will give the slope and the parameters for displacement, horsepower, weight and acceleration.
+
+```{r, warning=FALSE, message=FALSE}
+
+l <- t(A) %*% A
+m <- t(A) %*% b
+
+x_hat <- solve(l) %*% m
+x_hat
+
+```
+
+The resulting equation is given as below : 
+
+$\hat{mpg} = `r x_hat[1]` + (`r x_hat[2]`) * displacement + (`r x_hat[3]`) * horsepower + (`r x_hat[4]`) * weight + (`r x_hat[5]`) * acceleration$ 
+
+####c. Finally, calculate the fitting error between the predicted mpg of your model and the actual mpg. 
+```{r, warning=FALSE, message=FALSE}
+
+p <- A %*% x_hat
+e <- b - p
+squared_error <- sum(e^2)
+
+squared_error
+```

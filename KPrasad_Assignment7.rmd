@@ -1,0 +1,221 @@
+---
+title: "Data605 - Assignment7"
+author: "Kishore Prasad"
+date: "October 9, 2016"
+output: html_document
+---
+
+
+```{r, warning=FALSE, message=FALSE}
+
+library(stringr)
+library(dplyr)
+
+```
+
+##Problem set 1
+
+
+#### Part 1
+
+Please write a function to compute the expected value and standard deviation of an array of values. Compare your results with that of R's mean and std functions. Please document your work in an R-Markdown file and ensure that you have good comments to help the reader follow your work.
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+
+exp_val <- function(num_array) {
+
+    # sum up all the values in the array
+    sum_nums <- sum(num_array)
+    
+    # get the number of elements in the array
+    len_nums <- length(num_array)
+    
+    # Calculate the mean of the array by dividing the summed up values by the number of elements
+    return (sum_nums / len_nums)  
+} 
+
+
+std_dev <- function(num_array) {
+    
+    # prepare another array to hold the differences between the array element and the mean of the array
+    vars_array <- num_array - exp_val(num_array)
+    
+    # get the number of elements in the array
+    len_nums <- length(num_array)
+
+    # square the differences so that the +ve does not cancel the -ve differences
+    sqr_vars <- vars_array^2
+    
+    # Calculate the variance as a mean of the squared members 
+    var_num_array <- sum(sqr_vars) / (len_nums)   
+    
+    # return the square root for the standard deviation    
+    return (sqrt(var_num_array))
+}
+
+x <- c(1,4,6,7,9,12,25,31,12,11,10)
+
+
+# compare R's mean with the function output - It matches. 
+mean(x)
+exp_val(x)
+
+# compare R's standard deviation with the function output - It does not match. 
+sd(x)
+std_dev(x)
+
+```
+
+Based on the above outputs we can see that the R's mean function matches with the function output of exp_val.
+
+However, the standard deviation does not match. This is because in R's sd() function, the denominator used is (n-1). Where as we are taking the denominator as n. 
+
+Changing the function below to use n-1, we can see that it now matches the outputs.
+
+```{r, warning=FALSE, message=FALSE}
+
+std_dev <- function(num_array) {
+    
+    # prepare another array to hold the differences between the array element and the mean of the array
+    vars_array <- num_array - exp_val(num_array)
+    
+    # get the number of elements in the array
+    len_nums <- length(num_array)
+
+    # square the differences so that the +ve does not cancel the -ve differences
+    sqr_vars <- vars_array^2
+    
+    # Calculate the variance as a mean of the squared members - THE DENOMINATOR IS NOW (n-1)
+    var_num_array <- sum(sqr_vars) / (len_nums - 1)   
+    
+    # return the square root for the standard deviation    
+    return (sqrt(var_num_array))
+}
+
+x <- c(1,4,6,7,9,12,25,31,12,11,10)
+
+
+# compare R's standard deviation with the function output - It matches now !! 
+sd(x)
+std_dev(x)
+
+
+```
+
+
+
+#### Part 2
+
+Now, consider that instead of being able to neatly fit the values in memory in an array, you have an infinite stream of numbers coming by. How would you estimate the mean and standard deviation of such a stream? Your function should be able to return the current estimate of the mean and standard deviation at any time it is asked. Your program should maintain these current estimates and return them back at any invocation of these functions. (Hint: You can maintain a rolling estimate of the mean and standard deviation and allow these to slowly change over time as you see more and more new values).
+
+
+**Answer:**
+
+I am assuming a situation where temperature of an instrument is being monitored continuously. At any point in time, I can check for the mean and standard deviation and the function should return the same reliably. 
+
+The major challenge here is to calculate the mean and sd especially when the temperature array is quite huge. 
+
+As a solution, I will pass the previous mean, standard deviation as well as the previous number of readings to the function along with the new list of values. Using the previous mean and sd, I will now calculate the new mean and sd.
+
+Below is the function and the tests conducted with the function.
+
+```{r, warning=FALSE, message=FALSE}
+
+streaming_stats <- function(new_values, pre_mean=NULL, pre_sd=NULL, pre_nums=NULL) {
+    
+    # initialize a vector that holds the 3 important metrics we need
+    stats = c("mean"=0, "sd"=0, "n"=0)
+    
+    # If there were no previous values
+    if(is.null(pre_nums)){
+       stats["mean"] <- mean(new_values)
+       stats["sd"] <- sd(new_values)
+       stats["n"] <- length(new_values)
+    }
+    
+    else {
+        ## We calculate the new mean
+        # First we create a new vector consisting of the previous means and the new vector
+        array_values <- c(replicate(pre_nums, pre_mean), new_values)
+
+        # next we calculate the mean of the new set of values
+        stats["mean"] <- mean(array_values) 
+
+        ## We store the new length
+        stats["n"] <- pre_nums + length(new_values)
+
+                
+        ## We calculate the new sd
+        # first we have to recreate the variance from the previous values
+        sum_pre_var <-  (pre_sd^2) * (pre_nums - 1)
+
+        # However, there is now a change in the mean and there will be a delta that needs to be added to the sum_pre_var to compensate for the delta. We calculate the delta as below:
+        
+        sum_delta <- sum((replicate(pre_nums, pre_mean) - stats["mean"])^2)
+        
+        # next we calculate sum of the differences for the new values to the extended mean
+        sum_new_var <- sum((new_values-stats["mean"])^2)
+
+        # next we total up both the values and divide by the number of elements to give the variance. 
+        new_var <-  (sum_pre_var + sum_delta + sum_new_var) / (stats["n"]-1) 
+        
+        # finally we calculate the standard deviation by taking the square root of this
+        stats["sd"] <- sqrt(new_var)
+        
+    }
+    return(stats)
+}
+
+x <- c(59, 65, 78, 13, 28, 51, 25, 98, 97, 58)
+stats <- streaming_stats(x)
+
+# compare means
+stats["mean"]
+mean(x)
+
+# compare sd
+stats["sd"]
+sd(x)
+
+# Round 1 - Add new values
+y <- c(91, 45, 57)
+# pass also the previous stats
+stats <- streaming_stats(new_values = y, pre_mean = stats["mean"], pre_sd = stats["sd"], pre_nums = stats["n"] )
+
+# concatenate both x and y
+z <- c(x,y)
+
+# now compare means for the new stream
+stats["mean"]
+mean(z)
+
+# compare sd for the new stream
+stats["sd"]
+sd(z)
+
+
+# Round 2 - Add new values
+p <- c(56, 23, 67)
+# pass also the previous stats
+stats <- streaming_stats(new_values = p, pre_mean = stats["mean"], pre_sd = stats["sd"], pre_nums = stats["n"] )
+
+# concatenate both z and p
+a <- c(z,p)
+
+# now compare means for the new stream
+stats["mean"]
+mean(a)
+
+# compare sd for the new stream
+stats["sd"]
+sd(a)
+
+```
+
+
+We can see from the above tests that the mean and the standard deviation is being calculated reliably for the entire data as and when new values are made available.
+
+
+

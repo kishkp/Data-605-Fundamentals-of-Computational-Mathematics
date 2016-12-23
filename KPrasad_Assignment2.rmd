@@ -1,0 +1,119 @@
+---
+title: "Data605 - Assignment2"
+author: "Kishore Prasad"
+date: "September 04, 2016"
+output: html_document
+---
+
+
+1. Problem set 1
+
+(1) Show that A^T^A=AA^T^ in general.
+
+**Answer:**
+
+a)  Let A be a $m \times n$ matrix and $m \neq  n$
+
+    Then $A^T$ would be a $n \times m$ matrix.
+
+    $A^T \times A$ will be a $n \times n$ matrix.
+
+    Similarly $A \times A^T$ would be a $m \times m$ matrix. 
+
+    Since $m \neq n$, these 2 matrix cannot be the same since their dimensions differ.
+
+b)  Let A be a $m \times m$ matrix and assume that $m = 2$ and $p \neq q \neq r \neq s$ 
+
+    Then A = $\begin{bmatrix} p & q \\ r & s \end{bmatrix}$ and A^T^ = $\begin{bmatrix} p & r \\ q & s \end{bmatrix}$ 
+    
+    
+    $A \times A^T = \begin{bmatrix} p & q \\ r & s \end{bmatrix} \times \begin{bmatrix} p & r \\ q & s \end{bmatrix} = \begin{bmatrix} ({ p }^{ 2 }+{ q }^{ 2 }) & (pr+qs) \\ (rp+sq) & ({ r }^{ 2 }+{ s }^{ 2 }) \end{bmatrix}$
+
+
+    $A^T \times A = \begin{bmatrix} p & r \\ q & s \end{bmatrix} \times \begin{bmatrix} p & q \\ r & s \end{bmatrix} = \begin{bmatrix} ({ p }^{ 2 }+{ r }^{ 2 }) & (pq+rs) \\ (qp+sr) & ({ q }^{ 2 }+{ s }^{ 2 }) \end{bmatrix}$
+
+Since $p \neq q \neq r \neq s$, we can conclude that the two resultant matrices are not equal since the respective elements of the matrices are not equal.
+
+
+
+(2) For a special type of square matrix A, we get A^T^A=AA^T^ . Under what conditions could this be true? (Hint: The Identity matrix I is an example of such a matrix).
+
+**Answer**
+
+A square matrix needs to be symetrical in order for A^T^A=AA^T^.
+
+
+
+
+2. Problem set 2
+
+Matrix factorization is a very important problem. There are supercomputers built just to do matrix factorizations. Every second you are on an airplane, matrices are being factorized. Radars that track flights use a technique called Kalman ltering. At the heart of Kalman Filtering is a Matrix Factorization operation. Kalman Filters are solving linear
+systems of equations when they track your flight using radars. Write an R function to factorize a square matrix A into LU or LDU, whichever you prefer. 
+
+**Answer: Below is the R code for the function. This function can handle any number of dimensions.Please note: The function does not handle matrices that cannot be factorized and will give an error. Some examples for upto 5 dimesnions have been solved below along with the function**
+
+
+```{r, warning=FALSE, message=FALSE}
+
+factorize <- function(A) {
+
+    dim_a <- nrow(A)                # Determine the dimension of A
+    num_e <- (dim_a*(dim_a-1))/2    # Determine number of Elimination matrices
+    L_num <- 1                      # start with the first L 
+    orig_A <- A                     # Store the original A matrix
+    Elm_matrix_list <- replicate(num_e, list(diag(dim_a))) # generate a list to store all the elimination matrices for troubleshooting if required
+    L <- diag(dim_a)                # L
+    
+    # set up a loop for rows from 2 to dim_a
+    for(i in 2:dim_a) {
+        # set up loops for the respective columns from column 1 of the row to column i - 1
+        for(j in 1:(i-1)){
+            names(Elm_matrix_list)[L_num] <- paste0("E", i,j, collapse = "") #name the respective Elimination matrices with E21, E22 etc.
+            Elm_matrix_list[[L_num]][i,j] <- (-1)*A[i,j]/A[j,j] # generate the Elimination matrix
+            A <- Elm_matrix_list[[L_num]] %*% A                 # Generate the new A  
+            L <- L %*% solve(as.matrix(Elm_matrix_list[[L_num]]))   # Store the L
+            L_num = L_num + 1            
+        }
+    }
+
+    factor_list <- replicate(2, list(diag(dim_a)))
+    
+    factor_list[[1]] <- L
+    factor_list[[2]] <- A
+    names(factor_list)<-c("L", "U")
+    return(factor_list)
+}
+
+```
+
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# test with 3 dimensions
+A <- matrix(c(1,2,3,1,1,1,2,0,1),nrow=3)
+
+factors <- factorize(A)
+A
+factors[[1]] %*% factors[[2]]
+A==factors[[1]] %*% factors[[2]]
+
+# test with 4 dimensions
+A <- matrix(c(1,2,3,4,1,1,1,2,0,1,1,1,2,3,4,5),nrow=4)
+
+factors <- factorize(A)
+A
+factors[[1]] %*% factors[[2]]
+A==factors[[1]] %*% factors[[2]]
+
+
+# test with 5 dimensions
+A <- matrix(c(1,2,3,4,1,1,1,2,5,1,3,1,2,3,4,5,3,4,6,7,7,3,4,7,4),nrow=5)
+
+factors <- factorize(A)
+A
+factors[[1]] %*% factors[[2]]
+A==factors[[1]] %*% factors[[2]]
+
+```
+

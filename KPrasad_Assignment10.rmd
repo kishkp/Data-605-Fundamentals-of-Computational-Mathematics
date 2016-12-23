@@ -1,0 +1,121 @@
+---
+title: "Data605 - Assignment10"
+author: "Kishore Prasad"
+date: "October 30, 2016"
+output: html_document
+---
+
+##Problem set 1
+
+
+You'll verify for yourself that PageRank works by performing calculations on a small universe of web pages. Let's use the 6 page universe that we had in the course notes. For this directed graph, perform the following calculations in R. 
+
+#### Part 1
+
+ Form the A matrix. Then, introduce decay and form the B matrix as we did in the course notes.
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+
+# form the A matrix
+
+A <- matrix(c(  0, 1/2, 1/2,   0,   0,   0,
+                0,   0,   1,   0,   0,   0,
+              1/4, 1/4,   0,   0, 1/4, 1/4,
+                0,   0,   0,   0, 1/2, 1/2,
+                0,   0,   0, 1/2,   0, 1/2,
+                0,   0, 1/2, 1/2,   0,   0), nrow=6)
+
+
+# Introduce decay d = 0.85
+
+decay <- 0.85
+
+num_links <- 6
+
+B <- (decay * A) + ((1 - decay)/num_links)
+
+B
+
+```
+
+
+#### Part 2
+
+ Start with a uniform rank vector r and perform power iterations on B till convergence. That is, compute the solution r = B^n x r. Attempt this for a sufficiently large n so that r actually converges.
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+
+matrix_power <- function(orig_matrix, power){
+  if(power == 1){
+    return(orig_matrix)
+  }else{
+    return(orig_matrix %*% matrix_power(orig_matrix, power - 1))
+  }
+}
+
+r <- matrix(c(1/6,1/6,1/6,1/6,1/6,1/6),nrow=6)
+
+k <- 100
+
+rk <- matrix_power(B,k) %*% r
+
+rk
+
+
+```
+
+
+#### Part 3
+
+ Compute the eigen-decomposition of B and verify that you indeed get an eigenvalue of 1 as the largest eigenvalue and that its corresponding eigenvector is the same vector that you obtained in the previous power iteration method. Further, this eigenvector has all positive entries and it sums to 1.
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+
+eigen_b <- eigen(B)
+
+# Show all eigen values
+eigen_b$values
+
+# check for the highest eigen value
+max(as.numeric(eigen_b$values))
+
+# Verify that the eigen vector for the highest value is the same as power iteration method
+eigen_b_1 <- as.numeric((1/sum(eigen_b$vectors[,1]))*eigen_b$vectors[,1])
+eigen_b_1
+
+round(as.numeric(rk),8) == round(eigen_b_1,8)
+
+# Further, this eigenvector has all positive entries and it sums to 1
+sum(eigen_b_1)
+```
+
+
+#### Part 4
+
+ Use the graph package in R and its page.rank method to compute the Page Rank of the graph as given in A. Note that you don't need to apply decay. The package starts with a connected graph and applies decay internally. Verify that you do get the same PageRank vector as the two approaches above.
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+
+library(igraph)
+
+# generate graph
+graph_A <- graph.adjacency(t(A), weighted = TRUE, mode = "directed")
+
+# determine page rank for the graph
+graph_A_pagerank <- page.rank(graph_A)$vector
+
+graph_A_pagerank
+
+# check if the results are same as with the previous 2 methods
+round(graph_A_pagerank,7) == round(rk,7)
+
+```
+

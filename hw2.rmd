@@ -1,0 +1,52 @@
+---
+title: "HW2"
+author: "Doc"
+date: "October 1, 2016"
+output: pdf_document
+---
+
+1.  It is trivial to show that if A is not symmetric, then $A^{T}$A $\neq$ A$A^{T}$ as the dimensions differ by the rules of matrix multiplication (e.g., 3 x 4 x 4 x 3 is a 3 x 3 vs.  4 x 3 x 3 x 4 which is a 4 x 4).
+If symmetric, it is also trivial to show that by the rules of matrix multiplication that for all i $\neq$ j that elements $a_{ji}$ = $a_{ij}$ for $A^{T}$A == A$A^{T}$. Let C be the product of the two matrices.  Then set up equalities for the two proposed matrix products. 
+
+2.  You provided some great approaches for deriving LU factorization, so I thought I would provide a unique method-nonlinear optimization.  Specifically, the below approach minimizes the L2 norm between the original matrix and the variables used to construct the upper / lower matrix.  I demonstrate on a 3x3 and 4x4.  Note: simply build the matrix from the results of the minimization.  There are some advantages and disadvantages to this method, but I thought you might want to see it.
+
+
+```{r}
+f=function(x){
+a=matrix(c(3,4,5,1,4,6,3,7,11), byrow=FALSE, nrow=3)
+(x[4]-a[1,1])^2+   
+(x[5]-a[1,2])^2+    
+(x[6]-a[1,3])^2+    
+(x[1]*x[4]-a[2,1])^2 +   
+(x[1]*x[5]+x[7]-a[2,2])^2+  
+(x[1]*x[6]+x[8]-a[2,3])^2+  
+(x[2]*x[4]-a[3,1])^2 +   
+(x[2]*x[5]+x[3]*x[7]-a[3,2])^2+ 
+(x[2]*x[6]+x[3]*x[8]+x[9]-a[3,3])^2 
+}
+mynlm = nlm(f, p=c(rep(1,9)), gradtol=1e-30, iterlim=1000)
+
+f=function(x){
+a=matrix(c(3,4,5,1,4,6,3,7,11,4,4,3,4,14,11,3), byrow=FALSE, nrow=4)
+(x[7]-a[1,1])^2+   
+(x[8]-a[1,2])^2+    
+(x[9]-a[1,3])^2+ 
+(x[10]-a[1,4])^2 +    
+(x[1]*x[7]-a[2,1])^2 +  
+(x[1]*x[8]+x[11]-a[2,2])^2+
+(x[1]*x[9]+x[12]-a[2,3])^2+
+(x[1]*x[10]+x[13]-a[2,4])^2+
+(x[2]*x[7]-a[3,1])^2+
+(x[2]*x[8]+x[3]*x[11]-a[3,2])^2+
+(x[2]*x[9]+x[3]*x[12]+x[14]-a[3,3])^2+
+(x[2]*x[10]+x[3]*x[13]+x[15]-a[3,4])^2+
+(x[4]*x[7]-a[4,1])^2+
+(x[4]*x[8]+x[5]*x[11]-a[4,2])^2+
+(x[4]*x[9]+x[5]*x[12]+x[6]*x[14]-a[4,3])^2+
+(x[4]*x[10]+x[5]*x[13]+x[6]*x[15]+x[16]-a[4,4])^2
+}
+
+mynlm = nlm(f, p=c(rep(1,16)), gradtol=1e-30, iterlim=1000)
+
+```
+

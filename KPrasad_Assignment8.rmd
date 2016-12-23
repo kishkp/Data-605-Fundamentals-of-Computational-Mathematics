@@ -1,0 +1,134 @@
+---
+title: "Data605 - Assignment8"
+author: "Kishore Prasad"
+date: "October 15, 2016"
+output: html_document
+---
+
+##Problem set 1
+
+Your colleague either commutes by train or by the bus. 20 days of the month, she takes the train and the remaining 10 days she takes the bus. If she takes the train, she reaches work on time with a probability of 0:9. If she takes the bus, she frequently gets stuck in traffic and reaches work on time with a probability of 0:5. Given that she was on time today, what is the probability that she took the bus to work today?
+
+**Answer:**
+
+
+```{r, warning=FALSE, message=FALSE}
+
+# Lets start with the various probabilities. 
+
+# First the probabilities for train and bus travel in given 30 days
+
+p_b <- 10/30                # probability of bus 
+p_t <- 20/30                # probability of train
+
+p_b
+p_t
+
+# Next we look at being late given train or bus travel
+
+# probability of taking the bus and being on time or late
+p_b_ot <- 0.5               # probability of bus on time 
+p_b_l <- 1 - p_b_ot         # probability of bus late 
+
+p_b_ot
+p_b_l
+
+
+# probability of taking the train and being on time or late
+p_t_ot <- 0.9               # probability of train on time 
+p_t_l <- 1 - p_t_ot         # probability of train late 
+
+p_t_ot
+p_t_l
+
+# Next we calculate for each condition in the terminal node in a probability tree
+
+p_b_ot_node <- p_b * p_b_ot     # probability of taking a bus and being on time
+p_b_l_node <- p_b * p_b_l       # probability of taking a bus and being late
+p_t_ot_node <- p_t * p_t_ot     # probability of taking a train and being on time
+p_t_l_node <- p_t * p_t_l       # probability of taking a train and being late
+
+p_b_ot_node
+p_b_l_node
+p_t_ot_node
+p_t_l_node
+
+```
+
+Given that the collegue is on time, we narrow down our node set to only those where the collegue is on time i.e p_b_ot_node and p_t_ot_node. To find the probability that the collegue was on bus:
+
+
+```{r, warning=FALSE, message=FALSE}
+
+p_bus_given_ontime <- p_b_ot_node / (p_b_ot_node + p_t_ot_node)
+
+p_bus_given_ontime
+```
+
+
+
+**The probability that my collegue travelled by bus given that she was on time is `r p_bus_given_ontime` or `r round(p_bus_given_ontime, 3) * 100`%**
+
+
+
+
+#### Part 2
+
+In the Grade Network that we looked at in the notes, what happens to the probability of Difficulty of Course when you present the evidence that the received recommendation letter was good? In addition, now present the evidence that both SAT scores were good and the letter of recommendation was good, What is the probability of the Difficulty of Course now? 
+
+**Answer:**
+
+```{r, warning=FALSE, message=FALSE}
+library(gRain)
+
+# Create all the conditional probabilities
+yn <- c("yes", "no")
+lh <- c("low", "high")
+
+d <- cptable(~difficulty, values=c(0.7, 0.3), levels=yn)
+i <- cptable(~intelligence, values=c(0.8,0.2), levels=lh)
+g.di <- cptable(~grade|difficulty:intelligence, values=c(0.8, 0.2, 0.6, 0.4, 0.1, 0.9, 0.01, 0.99), levels=lh)
+s.i <- cptable(~SAT|intelligence, values=c(0.9, 0.1, 0.2, 0.8), levels=lh)
+l.g <- cptable(~letter|grade, values=c(0.9, 0.1, 0.05, 0.95), levels=lh)
+
+# compile list of conditional probabilities
+plist <- compileCPT(list(d,i,g.di,s.i,l.g))
+net1 <- grain(plist)
+net1
+(querygrain(net1, nodes=c("difficulty", "intelligence", "sat", "grade", "letter"), type="marginal"))
+
+```
+
+#### What happens to the probability of Difficulty of Course when you present the evidence that the received recommendation letter was good?
+
+```{r, warning=FALSE, message=FALSE}
+
+letter_g <- setEvidence(net1, nodes="letter", state="high")
+querygrain(letter_g, nodes="difficulty", type="marginal")
+
+```
+
+#### In addition, now present the evidence that both SAT scores were good and the letter of recommendation was good, What is the probability of the Difficulty of Course now?
+
+Building upon the previous network:
+```{r, warning=FALSE, message=FALSE}
+
+SAT_g_letter_g <- setEvidence(letter_g, nodes="SAT", state="high")
+querygrain(SAT_g_letter_g, nodes="difficulty", type="marginal")
+
+```
+
+
+Alternatively, if done independently i.e starting from the original network:
+
+```{r, warning=FALSE, message=FALSE}
+
+SAT_g_letter_g <- setEvidence(net1, nodes=c("letter", "SAT"), state=c("high", "high"))
+querygrain(SAT_g_letter_g, nodes="difficulty", type = "joint")
+
+```
+
+
+
+
+

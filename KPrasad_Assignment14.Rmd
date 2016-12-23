@@ -1,0 +1,81 @@
+---
+title: "Data605 - Assignment14"
+author: "Kishore Prasad"
+date: "Nov 27, 2016"
+output: html_document
+---
+
+
+##Problem set 1
+
+This week, we'll work out some Taylor Series expansions of popular functions.
+
+$f(x) = \frac{1}{(1-x)}$
+
+$f(x) = e^x$ 
+
+$f(x) = ln(1 + x)$
+
+For each function, only consider its valid ranges as indicated in the notes when you are computing the Taylor Series expansion. 
+
+
+**Answer:**
+
+### 1
+
+$f(x) = \frac{1}{(1-x)}$
+
+Taylor's Theorem states that any function that is infinitely differentiable can be represented as a polynomial of the following form:
+
+$$f(x)\quad =\sum _{ n=0 }^{ \infty } {\frac{f^{(n)} (a)}{n!}}(x-a)^{n}$$
+ 
+Also:
+
+$$f^{(n)} (x) = {\frac{n!}{(1-x)^{(n+1)}}}$$
+
+Substituting this in the previous equation:
+
+
+$$f(a)\quad =\sum _{ n=0 }^{ \infty } {\frac{{\frac{n!}{(1-a)^{(n+1)}}}}{n!}}(x-a)^{n}$$
+
+$$f(a)\quad =\sum _{ n=0 }^{ \infty } {\frac{(x-a)^{n}}{(1-a)^{(n+1)}}}$$
+
+If a = 0, we get :
+
+$$f(x)\quad =\sum _{ n=0 }^{ \infty } {\frac{(x-0)^{n}}{(1-0)^{(n+1)}}}$$
+
+Simplifying this, We get:
+
+
+$$f(x)\quad =\sum _{ n=0 }^{ \infty }{ x^{ n },\quad x\quad \in \quad (-1,1) }$$
+
+
+### 2
+
+$f(x) = e^x$ 
+
+
+$$f(x) = e^x = e^a + e^a (x-a) + e^a (x-a)^2 + e^a (x-a)^3+ ...$$
+
+if a = 0, we get: 
+
+$$f(x) = e^x = e^0 + e^0 (x-0) + e^0 (x-0)^2 + e^0 (x-0)^3+ ...$$ $$f(x) = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \frac{x^4}{4!} + ...$$ 
+
+
+$$f(x)\quad =\sum _{ n=0 }^{ \infty }{ \frac { x^{ n } }{ n! } ,\quad x\quad \in \quad R }$$
+
+
+
+### 3
+
+$f(x) = ln(1 + x)$
+
+
+$$f(x) = ln(1 + x) = ln(1+a) = \frac{(x-a)}{(1+a)}-\frac{(x-a)^2}{2!(1+a)^2}+\frac{(x-a)^3}{3!2(1+a)^3} - \frac{(x-a)^4}{4!(3)(2)(1+a)^3} + ...$$
+
+If a = 0, we get :
+
+$$f(x) = x - \frac{x^2}{2}+\frac{x^3}{3}-\frac{x^4}{4}+ ...$$ 
+
+
+$$f(x)\quad =\sum _{ n=0 }^{ \infty }{ (-1)^{ n+1 }\frac { x^{ n } }{ n } ,\quad x\quad \in \quad (-1,1) }$$

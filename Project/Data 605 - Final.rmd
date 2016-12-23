@@ -1,0 +1,691 @@
+---
+title: "Data 605 - Fundamentals of Computational Mathematics - Final Project"
+author: "Kishore Prasad"
+date: "December 11, 2016"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+```
+
+# Data Selection
+
+I have selected MasVnrArea (Masonry veneer area in square feet) as the X variable and the SalePrice is the dependent variable (Y).
+
+First we will create a dataset with only the required columns. While doing so, we will include only the complete cases / observations. Any NULL / NA values are excluded. We then assign the variables X and Y and  have a look at the histograms.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# Load all the data
+
+data <- read.csv(file = "D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/train.csv", col.names = c('Id', 'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Street', 'Alley', 'LotShape', 'LandContour', 'Utilities', 'LotConfig', 'LandSlope', 'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'RoofStyle', 'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType', 'MasVnrArea', 'ExterQual', 'ExterCond', 'Foundation', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinSF1', 'BsmtFinType2', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'Heating', 'HeatingQC', 'CentralAir', 'Electrical', 'FstFlrSF', 'SndFlrSF', 'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'KitchenQual', 'TotRmsAbvGrd', 'Functional', 'Fireplaces', 'FireplaceQu', 'GarageType', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea', 'GarageQual', 'GarageCond', 'PavedDrive', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch', 'TSsnPorch', 'ScreenPorch', 'PoolArea', 'PoolQC', 'Fence', 'MiscFeature', 'MiscVal', 'MoSold', 'YrSold', 'SaleType', 'SaleCondition', 'SalePrice'), stringsAsFactors = TRUE)
+
+data$MSSubClass <- as.factor(data$MSSubClass)
+
+
+# Create another dataset with only the required columns for X & Y
+prob_data <- data[ , c('MasVnrArea', 'SalePrice')]
+
+# Include only non-null or non-NA observations / cases
+prob_data <- prob_data[ complete.cases(prob_data), ]
+
+# Define X Variable
+X <- prob_data$MasVnrArea
+
+# Define Y Variable
+Y <- prob_data$SalePrice
+
+par(mfrow=c(1,2))
+# Histogram of X
+hist(X)
+
+# Histogram of Y
+hist(Y)
+
+```
+
+
+We can see from the above histograms of X that it is right skewed. Y variable seems to have an almost normal distribution but with a slight right tail. 
+
+
+# Probability
+
+
+We will now create x and y variables:
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+x <- quantile(X, na.rm = TRUE)[4]
+y <- quantile(Y, na.rm = TRUE)[3]
+
+x
+y
+
+```
+
+Small letter "x" is estimated as the 3d quartile of the X variable.The value of x is `r x`.
+Small letter "y" is estimated as the 2d quartile of the Y variable. The value of y is `r y`:  
+
+
+We will now calculate the below probabilities and intrepret their meanings. First we will calculate the individual probabilities as below:
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+# P(X > x)
+P_X_gt_x <- sum(X > x) / nrow(prob_data)
+
+# P(Y > y)
+P_Y_gt_y <- sum(Y > y) / nrow(prob_data)
+
+# P(X < x)       ## PLEASE NOTE - WE ARE NOT INCLUDING X = x
+P_X_lt_x <- sum(X < x) / nrow(prob_data)
+
+# P(X > x INTERSECT Y > y) 
+P_X_gt_x_Intersect_Y_gt_y <- sum(X > x & Y > y) / nrow(prob_data) 
+
+# P(X < x INTERSECT Y > y) 
+P_X_lt_x_Intersect_Y_gt_y <- sum(X < x & Y > y) / nrow(prob_data) 
+
+```
+
+Now, lets calculate the below joint / conditional probabilities assuming that the events are DEPENDENT.
+
+a.	P(X>x | Y>y)		
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# a.	P(X>x | Y>y) 	 =    P(X > x INTERSECT Y > y) / P(Y>y)	
+
+Prob_a <- P_X_gt_x_Intersect_Y_gt_y / P_Y_gt_y
+Prob_a_pert <- round(Prob_a * 100, 2)
+Prob_a
+
+```
+
+
+From the above output we can see that the probability P(X>x | Y>y) is `r Prob_a`. It means that there is a `r Prob_a_pert` % probability that the Masonry Veneer Area is above `r x` sq ft given that the Sale Price is above `r y` USD. In other words, out of the cases where Sale Price is above `r y` USD, there are `r Prob_a_pert` % cases that have Masonry Veneer Area above `r x` sq ft.  
+
+
+b.  P(X>x , Y>y)		
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# b.  P(X>x , Y>y)		 =  P(X > x INTERSECT Y > y)
+
+Prob_b <- P_X_gt_x_Intersect_Y_gt_y
+Prob_b_pert <- round(Prob_b * 100, 2)
+Prob_b
+
+```
+
+
+From the above output we can see that the probability P(X>x , Y>y) is `r Prob_b`. It means that there is a `r Prob_b_pert` % probability that the Masonry Veneer Area is above `r x` sq ft along with the Sale Price being above `r y` USD. In other words, there are `r Prob_a_pert` % cases where the Sale Price is above `r y` USD AND the Masonry Veneer Area above `r x` sq ft.
+
+
+c.  P(X<x | Y>y)
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# c.	P(X<x | Y>y)		=    P(X < x INTERSECT Y > y) / P(Y>y)	
+
+Prob_c <- P_X_lt_x_Intersect_Y_gt_y / P_Y_gt_y
+Prob_c_pert <- round(Prob_c * 100, 2)
+Prob_c
+
+```
+
+
+From the above output we can see that the probability P(X<x | Y>y) is `r Prob_c`. It means that there is a `r Prob_c_pert` % probability that the Masonry Veneer Area is below `r x` sq ft given that the Sale Price is above `r y` USD. In other words, out of the cases where Sale Price is above `r y` USD, there are `r Prob_a_pert` % cases that have Masonry Veneer Area below `r x` sq ft.
+
+NOTE: This does not include cases where the Masonry Veneer Area IS EQUAL TO `r x` sq ft. 
+
+#### Table of counts
+
+Lets create a dataset with X, Y and add the new columns that evaluate each of the conditions for X > x, Y > y. We will then use these additional columns for doing the counts. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+data_tbl <- as.data.frame(cbind.data.frame(X, Y, V3 = ifelse( X > x,">3d quartile", "<=3d quartile"),  V4 = ifelse( Y > y,">2d quartile", "<=2d quartile")))
+
+tbl <- addmargins(table(data_tbl$V3, data_tbl$V4, dnn = c("MasVnrArea","SalePrice")))
+tbl
+
+```
+
+
+#### Does splitting the training data in this fashion make them independent? 
+
+Let A be the new variable counting those observations above the 3d quartile for X. Let B be the new variable counting those observations above the 2d quartile for Y. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+A <- tbl[2,3]
+A
+
+B <- tbl[3,2]
+B
+
+```
+
+The values for A and B are `r A` and `r B` respectively. 
+
+Does P(A|B)=P(A)P(B)?   We will check mathematically, and then evaluate by running a Chi Square test for association.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+tot <- tbl[3,3]
+tot
+
+A_AND_B <- tbl[2, 2]
+
+# P(A)
+P_A <- A / tot
+
+# P(B)
+P_B <- B / tot
+
+# P(A INT B)
+P_A_INT_B <- A_AND_B / tot
+
+
+# P(A|B) = P(A INT B) / P(B)
+
+P_A_giv_B <- P_A_INT_B / P_B
+
+# P(A) * P(B) 
+
+P_A_INTO_P_B <-  (P_A * P_B)
+
+```
+
+From the above we can see that P(A|B) is `r P_A_giv_B` and P(A) * P(B) is `r P_A_INTO_P_B`. They are NOT equal and it means that they are not independent. Therefore splitting the training data in this manner is not going to make them independent. 
+
+#### Chi Square Test 
+
+Lets cross check with a chi square test for independence. Lets begin with the null hypothesis that the MasVnrArea is independent of the SalePrice. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+library(MASS)
+
+chisq.test(data_tbl[, c("X","Y")])
+
+```
+
+
+From the above output we can see that the p-value is < 0.05 significance level. In fact is is very low. Hence we can reject the null hypothesis. In other words, the chi square test suggests that  that the MasVnrArea is NOT independent of the SalePrice. This agrees with the probability test we did earlier.
+
+
+# Descriptive and Inferential Statistics.
+
+
+#### Univariate Descriptive Statistics and appropriate plots
+
+Below we will have a quick view of the descriptives and plots for a few variables. We will select a categorical variable and a continuous variable to look at the univariate statistics and plots.
+
+First we look at the variable 'MasVnrType' which is a categorical variable denoting the Masonry veneer type. We will look at the frequency table and a frequency plot for this variable. 
+
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+cbind(Frequency = addmargins(table(data$GarageFinish)), Percentage=round(addmargins(prop.table(table(data$GarageFinish)))*100,2))
+
+barplot(table(data$GarageFinish), main="Garage Finish Distribution", 
+  	xlab="No of Houses", col = rainbow(20))
+
+
+```
+
+The data contains 3 values for GarageFinish. All values seem to have a similar distribution. There were no houses with 'No Garage'.   
+
+Next, lets look at a continuos variable - GarageArea. This is size of garage in square feet. We will have a look at the summary for this variable as well as a boxplot and histogram. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+library(psych)
+describe(data$GarageArea)
+
+par(mfrow=c(1,2))
+hist(data$GarageArea)
+boxplot(data$GarageArea)
+
+
+```
+
+From the output above we can see that the mean and median are close to each other. This indicates that the data is possibly normally distributed. This is confirmed both with the skew as well as the histogram. Both show that there is a very small right skew but we can consider this to be normally distributed given the sample size.
+
+
+NOTE: We can run similar analysis for rest of the variables in the data. 
+
+#### Provide a scatterplot of X and Y.  
+
+Lets look at the scatter plot of X and Y to see if there is any pattern visible.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+library(ggplot2)
+ggplot(data_tbl, aes(x=X, y=Y)) +
+    geom_point(shape=1) +    # Use hollow circles
+    geom_smooth(method=lm)   # Add linear regression line 
+                             #  (by default includes 95% confidence region)
+
+```
+
+Visually, the scatter plot does not seem to indicate a strong linear relationship between X and Y.  
+
+
+#### Provide a 95% CI for the difference in the mean of X & Y.  
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+ttest_out <- t.test(data$MasVnrArea,data$SalePrice, paired = TRUE, conf.level = 0.95)
+ttest_out
+
+```
+
+The 95% Confidence Interval for the difference in the mean of X & Y is : `r ttest_out$conf.int`
+
+#### Correlation matrix.
+
+Below is the correlation matrix for the same:
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+cor_matrix <- cor(data_tbl[,c(1,2)])
+cor_matrix
+```
+
+
+#### Test the hypothesis that the correlation between these variables is 0 and provide a 99% confidence interval.  Discuss the meaning of your analysis.
+
+We will go with the following hypothesis:
+
+H0 - There is no correlation between the 2 variables.
+HA - There is a correlation between the 2 variables.
+
+Below is the test to check for correlation:
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+cor_test <- cor.test(x = data$MasVnrArea, y = data$SalePrice, conf.level = 0.99)
+cor_test
+
+
+
+```
+Based on the output above, we can see that at 99% confidence interval, the correlation is between `r cor_test$conf.int`. Also, the p-value is nearly zero, which indicates that we can reject the null hypothesis in favor of the alternative hypothesis. So we conclude that there is no evidence to suggest that there is no relation between the two variables.
+
+
+# Linear Algebra and Correlation.  
+
+Using the above generated correlation matrix, we can derive the precision matrix by inverting the same. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+cor_matrix
+
+pre_matrix <- solve(cor_matrix)
+pre_matrix
+
+```
+
+We an then multiply the precision matrix with the correlation matrix and vice versa.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+round(cor_matrix %*% pre_matrix,0)
+
+round(pre_matrix %*% cor_matrix,0)
+```
+
+
+When we multiply the correlation matrix with the precision matrix, we get the identity matrix as seen above.  
+
+
+#### Principle Components Analysis
+
+Principal component analysis (PCA) is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components. The number of principal components is less than or equal to the number of original variables. This transformation is defined in such a way that the first principal component has the largest possible variance (that is, accounts for as much of the variability in the data as possible), and each succeeding component in turn has the highest variance possible under the constraint that it is orthogonal to the preceding components. (https://en.wikipedia.org/wiki/Principal_component_analysis)
+
+In simple words, this technique helps us in identifying those components in the data that can explain the most variation. This leads to reduction in the number of variables that we use for model building and prediction.
+
+We will combine the 'train' and 'test' datasets so that we can carry out all the necessary transformations in one go. We then again split the train and test once we are done with the transformations. The following are the transformations that will be carried out:
+
+1. convert some of the numeric variables to Factors as they are actually factors.
+2. Impute Missing values in Numeric Variables
+3. Impute "NA" in categorical variables with "NotApplicable".
+4. Create Dummy variables for use in both PCA as well as prediction model building
+5. Split the combined transformed dataset into train and test.
+
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+library(mlr)
+
+data_train <- read.csv(file = "D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/train.csv", col.names = c('Id', 'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Street', 'Alley', 'LotShape', 'LandContour', 'Utilities', 'LotConfig', 'LandSlope', 'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'RoofStyle', 'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType', 'MasVnrArea', 'ExterQual', 'ExterCond', 'Foundation', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinSF1', 'BsmtFinType2', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'Heating', 'HeatingQC', 'CentralAir', 'Electrical', 'FstFlrSF', 'SndFlrSF', 'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'KitchenQual', 'TotRmsAbvGrd', 'Functional', 'Fireplaces', 'FireplaceQu', 'GarageType', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea', 'GarageQual', 'GarageCond', 'PavedDrive', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch', 'TSsnPorch', 'ScreenPorch', 'PoolArea', 'PoolQC', 'Fence', 'MiscFeature', 'MiscVal', 'MoSold', 'YrSold', 'SaleType', 'SaleCondition', 'SalePrice'), stringsAsFactors = FALSE)
+
+data_train <- cbind.data.frame(data_train, RecType = 'Train')
+
+
+data_test <- read.csv(file = "D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/test.csv", col.names = c('Id', 'MSSubClass', 'MSZoning', 'LotFrontage', 'LotArea', 'Street', 'Alley', 'LotShape', 'LandContour', 'Utilities', 'LotConfig', 'LandSlope', 'Neighborhood', 'Condition1', 'Condition2', 'BldgType', 'HouseStyle', 'OverallQual', 'OverallCond', 'YearBuilt', 'YearRemodAdd', 'RoofStyle', 'RoofMatl', 'Exterior1st', 'Exterior2nd', 'MasVnrType', 'MasVnrArea', 'ExterQual', 'ExterCond', 'Foundation', 'BsmtQual', 'BsmtCond', 'BsmtExposure', 'BsmtFinType1', 'BsmtFinSF1', 'BsmtFinType2', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'Heating', 'HeatingQC', 'CentralAir', 'Electrical', 'FstFlrSF', 'SndFlrSF', 'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'KitchenQual', 'TotRmsAbvGrd', 'Functional', 'Fireplaces', 'FireplaceQu', 'GarageType', 'GarageYrBlt', 'GarageFinish', 'GarageCars', 'GarageArea', 'GarageQual', 'GarageCond', 'PavedDrive', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch', 'TSsnPorch', 'ScreenPorch', 'PoolArea', 'PoolQC', 'Fence', 'MiscFeature', 'MiscVal', 'MoSold', 'YrSold', 'SaleType', 'SaleCondition', 'SalePrice'), stringsAsFactors = FALSE)
+
+data_test <- cbind.data.frame(data_test, RecType = 'Test')
+
+# Combine Datasets
+data_all <- rbind.data.frame(data_train, data_test, stringsAsFactors = FALSE)
+
+# Convert some of the numeric variables to Factors as they are actually factors.
+data_all$MSSubClass <- as.factor(data_all$MSSubClass)
+data_all$OverallQual <- as.factor(data_all$OverallQual)
+data_all$OverallCond <- as.factor(data_all$OverallCond)
+data_all$MoSold <- as.factor(data_all$MoSold)
+
+# Impute Missing values in Numeric Variables
+
+# Missing data
+data_n <- data_all[,c('LotFrontage', 'LotArea', 'YearBuilt', 'YearRemodAdd', 'MasVnrArea', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF', 'TotalBsmtSF', 'FstFlrSF', 'SndFlrSF', 'LowQualFinSF', 'GrLivArea', 'BsmtFullBath', 'BsmtHalfBath', 'FullBath', 'HalfBath', 'BedroomAbvGr', 'KitchenAbvGr', 'TotRmsAbvGrd', 'Fireplaces', 'GarageYrBlt', 'GarageCars', 'GarageArea', 'WoodDeckSF', 'OpenPorchSF', 'EnclosedPorch', 'TSsnPorch', 'ScreenPorch', 'PoolArea', 'MiscVal', 'YrSold', 'SalePrice')]
+
+library(VIM)
+aggr_plot <- aggr(data_n, col=c('navyblue','red'), numbers=TRUE, sortVars=TRUE, labels=names(data_n), cex.axis=.7, gap=3, ylab=c("Histogram of missing data","Pattern"))
+
+```
+
+As we can see from the above output, we have missing values in a few variables. Below, we impute those missing values. \
+
+a. Missing values found in LotFrontage, MasVnrArea, BsmtFullBath, BsmtHalfBath, BsmtFinSF1, BsmtFinSF2, BsmtUnfSF, TotalBsmtSF, GarageCars, GarageArea set to zero as it is assumed that these are houses that do not have these features.
+
+b. Missing values found in GarageYrBlt set to YearBuilt as it is assumed that the garage was built the same year as the house.
+
+c. Missing values in SalePrice is also set to zero as these are from the test dataset that did not have a saleprice column.
+
+d. 'NA' values in categorical variables are set to 'Not Available' so that R does not consider these as explicit NA values.
+
+
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# Missing values are found in LotFrontage, MasVnrArea set to zero
+data_all$LotFrontage[is.na(data_all$LotFrontage)] <- 0
+data_all$MasVnrArea[is.na(data_all$MasVnrArea)] <- 0
+data_all$BsmtFullBath[is.na(data_all$BsmtFullBath)] <- 0
+data_all$BsmtHalfBath[is.na(data_all$BsmtHalfBath)] <- 0
+data_all$BsmtFinSF1[is.na(data_all$BsmtFinSF1)] <- 0
+data_all$BsmtFinSF2[is.na(data_all$BsmtFinSF2)] <- 0
+data_all$BsmtUnfSF[is.na(data_all$BsmtUnfSF)] <- 0
+data_all$TotalBsmtSF[is.na(data_all$TotalBsmtSF)] <- 0
+data_all$GarageCars[is.na(data_all$GarageCars)] <- 0
+data_all$GarageArea[is.na(data_all$GarageArea)] <- 0
+
+# Missing values are found in GarageYrBlt set to YearBuilt
+data_all$GarageYrBlt[is.na(data_all$GarageYrBlt)] <- data_all$YearBuilt[is.na(data_all$GarageYrBlt)]
+
+# Missing values are found in SalePrice set to zero
+data_all$SalePrice[is.na(data_all$SalePrice)] <- 0
+
+# Now that we have NAs only in the categorical variables, we go ahead and replace it with Not Applicable.
+data_all[is.na(data_all)] <- 'NotApplicable'
+
+# convert all character variables into factors
+# data_all <- as.data.frame(unclass(data_all))
+data_all[sapply(data_all, is.character)] <- lapply(data_all[sapply(data_all, is.character)], as.factor)
+
+# Create Dummy variables for use in both PCA as well as prediction model building
+data_all <- createDummyFeatures(data_all, method = "reference") 
+
+# Split the combined transformed dataset into train and test.
+data_train <- data_all[data_all$RecType.Test==0, ]
+data_test <- data_all[data_all$RecType.Test==1, ]
+
+# remove id and train/test flag variables from train dataset
+data_train <- subset(data_train, select = -c(Id, RecType.Test))
+
+# remove SalePrice variables from test dataset
+data_test <- subset(data_test, select = -c(SalePrice, RecType.Test))
+
+# Conduct the PCA
+# pr_comp <- prcomp(data_train, center = TRUE, scale. = TRUE)
+# summary(pr_comp)
+
+# The previous PCA gave an error since there were some columns with constant variance. Hence, we are going to remove these columns from the PCA Analysis. The alternative is to add a record with minimal values to these columns to generate a variance.
+
+#excl_cols <- names(data_train[, sapply(data_train, function(v) var(v, na.rm=TRUE)==0)])
+
+data_train_sub <- subset(data_train, select = -c(SalePrice, MSSubClass.150, MSZoning.NotApplicable, Utilities.NotApplicable, Exterior1st.NotApplicable, Exterior2nd.NotApplicable, KitchenQual.NotApplicable, Functional.NotApplicable, SaleType.NotApplicable))
+
+pr_comp <- prcomp(data_train_sub, center = TRUE, scale. = TRUE)
+summary(pr_comp)
+
+```
+
+From the PCA summary above we can see that the proportion of variance explained by each component is low and this means that we will need a lot of components to explain to a satisfactory level (say 95%).
+
+Lets look at this information visually in the below plot:
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+#pr_comp$rotation
+plot(pr_comp, type = "l")
+
+```
+
+Lets try and find how many components we need to reach a 95% explanatory level. To do this we need to calculate the cumulative variance that is explained by the PCA. 
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+pr_var <- pr_comp$sdev^2
+
+prop_varex <- pr_var/sum(pr_var)
+
+plot(prop_varex, xlab = "Principal Component",
+             ylab = "Proportion of Variance Explained",
+             type = "b")
+
+plot(cumsum(prop_varex), xlab = "Principal Component",
+              ylab = "Cumulative Proportion of Variance Explained",
+              type = "b")
+
+pca_cumsum <- cumsum(prop_varex)
+No_Comps <- length(pca_cumsum[pca_cumsum <= 0.95])
+No_Comps
+
+```
+
+The above plots visually show us the cumulative variance as explained by the components. From the output above, we can see that `r No_Comps` components explain about 95% of the variance.  
+
+We will now use the components generated to rebuild the train and test datasets to be used in our regression. The following steps are followed: 
+
+1. We truncate the components to `r No_Comps` components and we add the SalePrice column back to this data. This is the dataset with the principal components that we will use for linear regression.
+
+2. We generate prinicpal components for 'test' data and keep it ready for using in the prediction of the linear regression.
+
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# We truncate the components to `r No_Comps` components and we add the SalePrice column back to this data. This is the dataset with the principal components that we will use for linear regression.
+
+data_train_PCA <- data.frame(SalePrice = data_train$SalePrice, pr_comp$x)
+data_train_PCA <- data_train_PCA[, 1:(No_Comps+1)]
+
+
+# We generate prinicpal components for 'test' data and keep it ready for using in the prediction of the linear regression.
+
+data_test_PCA <- predict(pr_comp, newdata = data_test)
+data_test_PCA <- as.data.frame(data_test_PCA)
+data_test_PCA <- data_test_PCA[, 1:No_Comps]
+
+
+```
+
+We now have the train and test datasets ready with the prinicpal components. 
+
+
+# Calculus-Based Probability & Statistics.  
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+library(MASS)
+min_nonzero_X <- min(X[X!=0])
+
+# Shifting the variable so that the min value is above zero
+new_X <- X + min_nonzero_X
+
+# Find the optimal value of lambda for this distribution
+lambda <- fitdistr(new_X, densfun = "exponential")$estimate["rate"]
+
+
+# Then take 1000 samples from this exponential distribution using this value 
+exp_distr <- rexp(1000, lambda)
+
+# Plot a histogram and compare it with a histogram of your original variable.   
+par(mfrow=c(1,2))
+
+hist(X)
+hist(exp_distr)
+
+# Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).  
+
+P = ecdf(exp_distr)
+plot(P)
+
+a <- quantile(P, c(0.05, 0.95))
+a
+
+
+#Also generate a 95% confidence interval from the empirical data, assuming normality.
+
+error <- qnorm(0.975)*sd(X)/sqrt(length(X))
+X_95_confint <- c(mean(X) - error, mean(X) + error)
+X_95_confint
+
+#Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.
+b <- quantile(X, c(0.05, 0.95))
+b
+
+
+```
+
+The variable MasVnrArea has a lot of zeros as values. We are shifting this to the right by adding the minimum value of MasVnrArea.  Upon fitting a exponential pdf to this shifted data, we get a lambda value of `r lambda`.
+
+We next generate 1000 samples from this lambda value. Plotting the histogram of the original data (X or MasVnrArea) and comparing it with the new set of samples (exp_distr), we can see that the histograms are similar. This is because we started with a variable that itself was right skewed and had a somewhat exponential distribution.
+
+Calculating the 5th and 95th percentiles using the cumulative distribution function (CDF) of the 1000 samples, we get the values as `r a`
+
+The 95% confidence interval from empirical data is calculated manually and the values are `r X_95_confint`.
+
+Finally, the empirical 5th percentile and 95th percentile of the data yields the values : `r b`
+
+
+# Modeling  
+
+We will be using the same train data set that was used for the PCA, as it contains all the transformations that are required to do build a predictive model. However, we will be adding back the 'SalePrice' column that we had removed from the train dataset so that we can train the model to predict the same.
+
+Also, we will be building 2 models using a logistic regression algorithm.
+
+a. Model using the original variables
+b. Model using the PCA components
+
+We will submit both model results to Kaggle to check for the scores.
+
+#### Original Variables
+
+First, we build and evaluate the model with Original variables.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# pca.train <- cbind.data.frame(pca.train, SalePrice = data$SalePrice)
+orig_mod = lm(SalePrice ~ ., data = data_train)
+summary(orig_mod)
+
+mod_exp <- paste0(coefficients(orig_mod)[1])
+
+for(i in 2:length(coefficients(orig_mod))){
+  mod_exp <- paste0(mod_exp, ' + (', names(coefficients(orig_mod)[i]), ' * ', coefficients(orig_mod)[i], ')' )
+}
+
+```
+
+Looking at the summary of the initial model, it seems that the model has performed quite well. The Adjusted R-squared value of 0.9241 indicates that the model is able to explain close to 92% of the variation in the data. The p-value of nearly zero indicates that this is not due to chance.
+
+The *, ** etc next to the 'Pr(>|t|)' column indicate the importance of the respective variable for the prediction. For example: We can see that 'LotArea' has a higher predictive power than 'LotFrontage'.
+
+The model equation is given by the following expression: 
+
+$\hat{SalePrice}$ = `r mod_exp` 
+
+
+We will now apply this model to the test data and keep ready for submission to kaggle.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+# Predict SalePrice using the LM model that we built earlier.
+SalePrice <- predict(orig_mod, newdata = data_test)
+
+# Combine the Id field and the predicted SalePrice into a csv file and submit to Kaggle.
+Kaggle_Original <- cbind.data.frame(data_test$Id, SalePrice)
+write.csv(Kaggle_Original, "D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/Kaggle_Original.csv",row.names = F)
+
+```
+
+#### Principal Components
+
+Next, lets build the model using only the principal components that explain 95% of the variance. 
+
+#### Model building
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+
+# Build model
+
+PCA_mod = lm(SalePrice ~ ., data = data_train_PCA)
+summary(PCA_mod)
+
+mod_exp <- paste0(coefficients(PCA_mod)[1])
+
+for(i in 2:length(coefficients(PCA_mod))){
+  mod_exp <- paste0(mod_exp, ' + (', names(coefficients(PCA_mod)[2]), ' * ', coefficients(PCA_mod)[2], ')' )
+}
+
+```
+
+
+#### Model Evaluation
+
+Looking at the summary of the initial model, it seems that the model has performed quite well though not as well as the previous model. The Adjusted R-squared value of 0.8786 indicates that the model is able to explain close to 88% of the variation in the data. The p-value of nearly zero indicates that this is not due to chance.
+
+The *, ** etc next to the 'Pr(>|t|)' column indicate the importance of the respective variable for the prediction. 
+
+The model equation is given by the following expression. But the regression equation may not make any sense since the original variables are no longer available and rather we are now working with the principal components.
+
+$\hat{SalePrice} = `r mod_exp`$ 
+
+
+We will now apply this model to the test data and keep ready for submission to kaggle.
+
+```{r, echo = TRUE, warning=FALSE, message=FALSE}
+# Predict SalePrice using the LM model that we built earlier.
+SalePrice <- predict(PCA_mod, newdata = data_test_PCA)
+
+# Combine the Id field and the predicted SalePrice into a csv file and submit to Kaggle.
+Kaggle_PCA <- cbind.data.frame(data_test$Id, SalePrice)
+write.csv(Kaggle_PCA, "D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/Kaggle_PCA.csv",row.names = F)
+
+```
+
+
+#### Kaggle Scores 
+
+Below are the scores from Kaggle submission. My Kaggle username is: kishkp. 
+
+![Kaggle Scores](D:/CUNY/Courses/Data 605 - Fundamentals of Computational Mathematics/Assignments/Project/KaggleSubmission.png)
+
+
+The PCA results have performed better than the model with the original vars even though its adjusted r-squared was less than the later.
+
+This may be due to the fact that the model with original vars might have over-fitted. I am hoping that I can improve on the score of PCA by doing the following:
+
+1. Look at the distribution of each numeric variable and try to normalize them prior to conducting the PCA.
+
+2. Try and derive new features using interaction terms.
+
